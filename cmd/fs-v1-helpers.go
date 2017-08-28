@@ -357,9 +357,9 @@ func fsRenameFile(sourcePath, destPath string) error {
 //		}
 //		return traceError(err)
 //	}
-	if err := os.MkdirAll(pathutil.Dir(destPath), 0777); err != nil {
-		return traceError(err)
-	}
+//	if err := os.MkdirAll(pathutil.Dir(destPath), 0777); err != nil {
+//		return traceError(err)
+//	}
 	if err := os.Rename((sourcePath), (destPath)); err != nil {
 		if isSysErrCrossDevice(err) {
 			return traceError(fmt.Errorf("%s (%s)->(%s)", errCrossDeviceLink, sourcePath, destPath))
