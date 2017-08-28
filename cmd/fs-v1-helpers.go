@@ -344,19 +344,19 @@ func fsRenameFile(sourcePath, destPath string) error {
 		return traceError(err)
 	}
 	// Verify if source path exists.
-	if _, err := os.Stat((sourcePath)); err != nil {
-		if os.IsNotExist(err) {
-			return traceError(errFileNotFound)
-		} else if os.IsPermission(err) {
-			return traceError(errFileAccessDenied)
-		} else if isSysErrPathNotFound(err) {
-			return traceError(errFileNotFound)
-		} else if isSysErrNotDir(err) {
+//	if _, err := os.Stat((sourcePath)); err != nil {
+//		if os.IsNotExist(err) {
+//			return traceError(errFileNotFound)
+//		} else if os.IsPermission(err) {
+//			return traceError(errFileAccessDenied)
+//		} else if isSysErrPathNotFound(err) {
+//			return traceError(errFileNotFound)
+//		} else if isSysErrNotDir(err) {
 			// File path cannot be verified since one of the parents is a file.
-			return traceError(errFileAccessDenied)
-		}
-		return traceError(err)
-	}
+//			return traceError(errFileAccessDenied)
+//		}
+//		return traceError(err)
+//	}
 	if err := os.MkdirAll(pathutil.Dir(destPath), 0777); err != nil {
 		return traceError(err)
 	}
