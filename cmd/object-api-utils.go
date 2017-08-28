@@ -24,6 +24,9 @@ import (
 	"runtime"
 	"strings"
 	"unicode/utf8"
+  "hash/fnv"
+  "encoding/binary"
+  "bytes"
 
 	"github.com/skyrings/skyring-common/tools/uuid"
 )
@@ -150,6 +153,31 @@ const slashSeparator = "/"
 // retainSlash - retains slash from a path.
 func retainSlash(s string) string {
 	return strings.TrimSuffix(s, slashSeparator) + slashSeparator
+}
+
+func hash32(s string) ([]byte, error){
+    h := fnv.New32a()
+    h.Write([]byte(s)) 
+    buf := new(bytes.Buffer)
+    err := binary.Write(buf, binary.LittleEndian, h.Sum32())
+    return buf.Bytes(), err 
+}
+
+func hashDirTo4Level(dir string) string {
+    h, err := hash32(dir);
+    if (err != nil) {
+        return ""
+    }
+
+    var buffer [7]byte  
+    for i := 0; i < 7; i++ {
+        if (i % 2 != 0) {
+            buffer[i] = '/' 
+        } else {
+            buffer[i] = h[i / 2] % 6 + 'A' 
+        }   
+    }   
+    return string(buffer[:])
 }
 
 // pathJoin - like path.Join() but retains trailing "/" of the last element
