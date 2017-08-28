@@ -523,20 +523,11 @@ func (fs fsObjects) PutObject(bucket string, object string, size int64, data io.
 	// with a slash separator, we treat it like a valid operation
 	// and return success.
 	if isObjectDir(object, size) {
-		// Check if an object is present as one of the parent dir.
-		if fs.parentDirIsObject(bucket, path.Dir(object)) {
-			return ObjectInfo{}, toObjectErr(traceError(errFileAccessDenied), bucket, object)
-		}
-		return dirObjectInfo(bucket, object, size, metadata), nil
+	  return ObjectInfo{}, toObjectErr(traceError(errFileAccessDenied), bucket, object)
 	}
 
 	if err = checkPutObjectArgs(bucket, object, fs); err != nil {
 		return ObjectInfo{}, err
-	}
-
-	// Check if an object is present as one of the parent dir.
-	if fs.parentDirIsObject(bucket, path.Dir(object)) {
-		return ObjectInfo{}, toObjectErr(traceError(errFileAccessDenied), bucket, object)
 	}
 
 	// No metadata is set, allocate a new one.
@@ -659,7 +650,7 @@ func (fs fsObjects) PutObject(bucket string, object string, size int64, data io.
 	fi, err := fsStatFile(pathJoin(fs.fsPath, bucket, object))
 	if err != nil {
 		return ObjectInfo{}, toObjectErr(err, bucket, object)
-	}
+  }
 
 	// Success.
 	return fsMeta.ToObjectInfo(bucket, object, fi), nil
