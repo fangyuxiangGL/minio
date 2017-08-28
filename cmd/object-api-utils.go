@@ -155,6 +155,24 @@ func retainSlash(s string) string {
 	return strings.TrimSuffix(s, slashSeparator) + slashSeparator
 }
 
+type createDirFunc func(string) error
+
+func create4LevelDirs(dir string, createDir createDirFunc) error {
+    var i,j,k,l byte
+    for i = 0; i < 6; i++ {
+        for j = 0; j < 6; j++ {
+            for k = 0; k < 6; k++ {
+                for l = 0; l < 6; l++ {
+                    if err := createDir(pathJoin(dir, string('A' + i), string('A' + j), string('A' + k), string('A' + l))); err != nil {
+                        return err 
+                    } 
+                }   
+            }   
+        }   
+    }
+    return nil
+}
+
 func hash32(s string) ([]byte, error){
     h := fnv.New32a()
     h.Write([]byte(s)) 
