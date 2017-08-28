@@ -17,6 +17,7 @@
 package cmd
 
 import (
+  "strings"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -219,7 +220,13 @@ func (fs fsObjects) MakeBucketWithLocation(bucket, location string) error {
 		return toObjectErr(err, bucket)
 	}
 
-	if err = fsMkdir(bucketDir); err != nil {
+	if err = create4LevelDirs(bucketDir, fsMkdir); err != nil {
+		return toObjectErr(err, bucket)
+	}
+ 
+  bucketMetaDir := pathJoin(fs.fsPath, minioMetaBucket, bucketMetaPrefix, bucket) 
+  
+	if err = create4LevelDirs(bucketMetaDir, fsMkdir); err != nil {
 		return toObjectErr(err, bucket)
 	}
 
@@ -526,6 +533,9 @@ func (fs fsObjects) PutObject(bucket string, object string, size int64, data io.
 	  return ObjectInfo{}, toObjectErr(traceError(errFileAccessDenied), bucket, object)
 	}
 
+  hashDir := hashDirTo4Level(object)
+  object = strings.Replace(object, "/", "%2F", -1)
+
 	if err = checkPutObjectArgs(bucket, object, fs); err != nil {
 		return ObjectInfo{}, err
 	}
@@ -537,11 +547,11 @@ func (fs fsObjects) PutObject(bucket string, object string, size int64, data io.
 
 	fsMeta := newFSMetaV1()
 	fsMeta.Meta = metadata
-
+   
 	var wlk *lock.LockedFile
 	if bucket != minioMetaBucket {
 		bucketMetaDir := pathJoin(fs.fsPath, minioMetaBucket, bucketMetaPrefix)
-		fsMetaPath := pathJoin(bucketMetaDir, bucket, object, fsMetaJSONFile)
+		fsMetaPath := pathJoin(bucketMetaDir, bucket, hashDir, object, fsMetaJSONFile)
 		wlk, err = fs.rwPool.Create(fsMetaPath)
 		if err != nil {
 			return ObjectInfo{}, toObjectErr(traceError(err), bucket, object)
@@ -634,7 +644,7 @@ func (fs fsObjects) PutObject(bucket string, object string, size int64, data io.
 	}
 
 	// Entire object was written to the temp location, now it's safe to rename it to the actual location.
-	fsNSObjPath := pathJoin(fs.fsPath, bucket, object)
+	fsNSObjPath := pathJoin(fs.fsPath, bucket, hashDir, object)
 	if err = fsRenameFile(fsTmpObjPath, fsNSObjPath); err != nil {
 		return ObjectInfo{}, toObjectErr(err, bucket, object)
 	}
@@ -647,7 +657,7 @@ func (fs fsObjects) PutObject(bucket string, object string, size int64, data io.
 	}
 
 	// Stat the file to fetch timestamp, size.
-	fi, err := fsStatFile(pathJoin(fs.fsPath, bucket, object))
+	fi, err := fsStatFile(pathJoin(fs.fsPath, bucket, hashDir, object))
 	if err != nil {
 		return ObjectInfo{}, toObjectErr(err, bucket, object)
   }

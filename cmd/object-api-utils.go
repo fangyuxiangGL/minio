@@ -158,18 +158,36 @@ func retainSlash(s string) string {
 type createDirFunc func(string) error
 
 func create4LevelDirs(dir string, createDir createDirFunc) error {
+    var dirL1,dirL2,dirL3,dirL4 [1]byte
     var i,j,k,l byte
+    if err := createDir(dir); err != nil {
+        return err 
+    }
     for i = 0; i < 6; i++ {
+        dirL1[0] = 'A' + i 
+        if err := createDir(pathJoin(dir, string(dirL1[:]))); err != nil {
+            return err 
+        }
         for j = 0; j < 6; j++ {
+            dirL2[0] = 'A' + j
+            if err := createDir(pathJoin(dir, string(dirL1[:]), string(dirL2[:]))); err != nil {
+                return err 
+            }
             for k = 0; k < 6; k++ {
+                dirL3[0] = 'A' + k
+                if err := createDir(pathJoin(dir, string(dirL1[:]), string(dirL2[:]), string(dirL3[:]))); err != nil {
+                    return err 
+                }
                 for l = 0; l < 6; l++ {
-                    if err := createDir(pathJoin(dir, string('A' + i), string('A' + j), string('A' + k), string('A' + l))); err != nil {
+                    dirL4[0] = 'A' + l
+                    if err := createDir(pathJoin(dir, string(dirL1[:]), string(dirL2[:]), string(dirL3[:]), string(dirL4[:]))); err != nil {
                         return err 
-                    } 
+                    }
                 }   
             }   
         }   
-    }
+    }   
+
     return nil
 }
 
