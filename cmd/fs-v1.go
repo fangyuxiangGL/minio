@@ -548,24 +548,24 @@ func (fs fsObjects) PutObject(bucket string, object string, size int64, data io.
 	fsMeta := newFSMetaV1()
 	fsMeta.Meta = metadata
    
-	var wlk *lock.LockedFile
-	if bucket != minioMetaBucket {
-		bucketMetaDir := pathJoin(fs.fsPath, minioMetaBucket, bucketMetaPrefix)
-		fsMetaPath := pathJoin(bucketMetaDir, bucket, hashDir, object, fsMetaJSONFile)
-		wlk, err = fs.rwPool.Create(fsMetaPath)
-		if err != nil {
-			return ObjectInfo{}, toObjectErr(traceError(err), bucket, object)
-		}
+//	var wlk *lock.LockedFile
+//	if bucket != minioMetaBucket {
+//		bucketMetaDir := pathJoin(fs.fsPath, minioMetaBucket, bucketMetaPrefix)
+//		fsMetaPath := pathJoin(bucketMetaDir, bucket, hashDir, object, fsMetaJSONFile)
+//		wlk, err = fs.rwPool.Create(fsMetaPath)
+//		if err != nil {
+//			return ObjectInfo{}, toObjectErr(traceError(err), bucket, object)
+//		}
 		// This close will allow for locks to be synchronized on `fs.json`.
-		defer wlk.Close()
-		defer func() {
+//		defer wlk.Close()
+//		defer func() {
 			// Remove meta file when PutObject encounters any error
-			if retErr != nil {
-				tmpDir := pathJoin(fs.fsPath, minioMetaTmpBucket, fs.fsUUID)
-				fsRemoveMeta(bucketMetaDir, fsMetaPath, tmpDir)
-			}
-		}()
-	}
+//			if retErr != nil {
+//				tmpDir := pathJoin(fs.fsPath, minioMetaTmpBucket, fs.fsUUID)
+//				fsRemoveMeta(bucketMetaDir, fsMetaPath, tmpDir)
+//			}
+//		}()
+//	}
 
 	// Uploaded object will first be written to the temporary location which will eventually
 	// be renamed to the actual location. It is first written to the temporary location
@@ -649,21 +649,21 @@ func (fs fsObjects) PutObject(bucket string, object string, size int64, data io.
 		return ObjectInfo{}, toObjectErr(err, bucket, object)
 	}
 
-	if bucket != minioMetaBucket {
+//	if bucket != minioMetaBucket {
 		// Write FS metadata after a successful namespace operation.
-		if _, err = fsMeta.WriteTo(wlk); err != nil {
-			return ObjectInfo{}, toObjectErr(err, bucket, object)
-		}
-	}
+//		if _, err = fsMeta.WriteTo(wlk); err != nil {
+//			return ObjectInfo{}, toObjectErr(err, bucket, object)
+//		}
+//	}
 
 	// Stat the file to fetch timestamp, size.
-	fi, err := fsStatFile(pathJoin(fs.fsPath, bucket, hashDir, object))
-	if err != nil {
-		return ObjectInfo{}, toObjectErr(err, bucket, object)
-  }
+//	fi, err := fsStatFile(pathJoin(fs.fsPath, bucket, hashDir, object))
+//	if err != nil {
+//		return ObjectInfo{}, toObjectErr(err, bucket, object)
+// }
 
 	// Success.
-	return fsMeta.ToObjectInfo(bucket, object, fi), nil
+	return fsMeta.ToObjectInfo(bucket, object, nil), nil
 }
 
 // DeleteObject - deletes an object from a bucket, this operation is destructive
