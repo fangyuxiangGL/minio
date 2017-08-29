@@ -395,6 +395,39 @@ func fsRenameFile(sourcePath, destPath string) error {
 		return traceError(err)
 	}
 	// Verify if source path exists.
+	if _, err := os.Stat((sourcePath)); err != nil {
+		if os.IsNotExist(err) {
+			return traceError(errFileNotFound)
+		} else if os.IsPermission(err) {
+			return traceError(errFileAccessDenied)
+		} else if isSysErrPathNotFound(err) {
+			return traceError(errFileNotFound)
+		} else if isSysErrNotDir(err) {
+			// File path cannot be verified since one of the parents is a file.
+			return traceError(errFileAccessDenied)
+		}
+		return traceError(err)
+	}
+	if err := os.MkdirAll(pathutil.Dir(destPath), 0777); err != nil {
+		return traceError(err)
+	}
+	if err := os.Rename((sourcePath), (destPath)); err != nil {
+		if isSysErrCrossDevice(err) {
+			return traceError(fmt.Errorf("%s (%s)->(%s)", errCrossDeviceLink, sourcePath, destPath))
+		}
+		return traceError(err)
+	}
+	return nil
+}
+
+func fsRenameFile2(sourcePath, destPath string) error {
+	if err := checkPathLength(sourcePath); err != nil {
+		return traceError(err)
+	}
+	if err := checkPathLength(destPath); err != nil {
+		return traceError(err)
+	}
+	// Verify if source path exists.
 //	if _, err := os.Stat((sourcePath)); err != nil {
 //		if os.IsNotExist(err) {
 //			return traceError(errFileNotFound)

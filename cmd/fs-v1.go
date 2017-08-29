@@ -645,7 +645,7 @@ func (fs fsObjects) PutObject(bucket string, object string, size int64, data io.
 
 	// Entire object was written to the temp location, now it's safe to rename it to the actual location.
 	fsNSObjPath := pathJoin(fs.fsPath, bucket, hashDir, object)
-	if err = fsRenameFile(fsTmpObjPath, fsNSObjPath); err != nil {
+	if err = fsRenameFile2(fsTmpObjPath, fsNSObjPath); err != nil {
 		return ObjectInfo{}, toObjectErr(err, bucket, object)
 	}
 
