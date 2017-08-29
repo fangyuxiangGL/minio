@@ -234,7 +234,7 @@ func fsOpenFile(readPath string, offset int64) (io.ReadCloser, int64, error) {
 }
 
 // Creates a file and copies data from incoming reader. Staging buffer is used by io.CopyBuffer.
-func fsCreateFile(filePath string, reader io.Reader, buf []byte, fallocSize int64) (int64, error) {
+func fsCreateFile2(filePath string, reader io.Reader, buf []byte, fallocSize int64) (int64, error) {
 	if filePath == "" || reader == nil {
 		return 0, traceError(errInvalidArgument)
 	}
@@ -250,6 +250,57 @@ func fsCreateFile(filePath string, reader io.Reader, buf []byte, fallocSize int6
 //	if err := checkDiskFree(pathutil.Dir(filePath), fallocSize); err != nil {
 //		return 0, traceError(err)
 //	}
+
+	writer, err := os.OpenFile((filePath), os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		// File path cannot be verified since one of the parents is a file.
+		if isSysErrNotDir(err) {
+			return 0, traceError(errFileAccessDenied)
+		}
+		return 0, err
+	}
+	defer writer.Close()
+
+	// Fallocate only if the size is final object is known.
+	if fallocSize > 0 {
+		if err = fsFAllocate(int(writer.Fd()), 0, fallocSize); err != nil {
+			return 0, traceError(err)
+		}
+	}
+
+	var bytesWritten int64
+	if buf != nil {
+		bytesWritten, err = io.CopyBuffer(writer, reader, buf)
+		if err != nil {
+			return 0, traceError(err)
+		}
+	} else {
+		bytesWritten, err = io.Copy(writer, reader)
+		if err != nil {
+			return 0, traceError(err)
+		}
+	}
+	return bytesWritten, nil
+}
+
+
+// Creates a file and copies data from incoming reader. Staging buffer is used by io.CopyBuffer.
+func fsCreateFile(filePath string, reader io.Reader, buf []byte, fallocSize int64) (int64, error) {
+	if filePath == "" || reader == nil {
+		return 0, traceError(errInvalidArgument)
+	}
+
+	if err := checkPathLength(filePath); err != nil {
+		return 0, traceError(err)
+	}
+
+	if err := os.MkdirAll(pathutil.Dir(filePath), 0777); err != nil {
+		return 0, traceError(err)
+	}
+
+	if err := checkDiskFree(pathutil.Dir(filePath), fallocSize); err != nil {
+		return 0, traceError(err)
+	}
 
 	writer, err := os.OpenFile((filePath), os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {

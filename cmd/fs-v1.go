@@ -602,7 +602,7 @@ func (fs fsObjects) PutObject(bucket string, object string, size int64, data io.
 	buf := make([]byte, int(bufSize))
 	teeReader := io.TeeReader(limitDataReader, multiWriter)
 	fsTmpObjPath := pathJoin(fs.fsPath, minioMetaTmpBucket, fs.fsUUID, tempObj)
-	bytesWritten, err := fsCreateFile(fsTmpObjPath, teeReader, buf, size)
+	bytesWritten, err := fsCreateFile2(fsTmpObjPath, teeReader, buf, size)
 	if err != nil {
 		fsRemoveFile(fsTmpObjPath)
 		errorIf(err, "Failed to create object %s/%s", bucket, object)
