@@ -741,9 +741,12 @@ func (fs fsObjects) CompleteMultipartUpload(bucket string, object string, upload
 		}
 	}
 
+  hashDir := hashDirToLevel(object, 4)
+  tmpObject := strings.Replace(object, "/", "%2F", -1) 
+
 	// Wait for any competing PutObject() operation on bucket/object, since same namespace
 	// would be acquired for `fs.json`.
-	fsMetaPath := pathJoin(fs.fsPath, minioMetaBucket, bucketMetaPrefix, bucket, object, fsMetaJSONFile)
+	fsMetaPath := pathJoin(fs.fsPath, minioMetaBucket, bucketMetaPrefix, bucket, hashDir, tmpObject, fsMetaJSONFile)
 	metaFile, err := fs.rwPool.Create(fsMetaPath)
 	if err != nil {
 		fs.rwPool.Close(fsMetaPathMultipart)
@@ -751,7 +754,7 @@ func (fs fsObjects) CompleteMultipartUpload(bucket string, object string, upload
 	}
 	defer metaFile.Close()
 
-	fsNSObjPath := pathJoin(fs.fsPath, bucket, object)
+	fsNSObjPath := pathJoin(fs.fsPath, bucket, hashDir, tmpObject)
 
 	// This lock is held during rename of the appended tmp file to the actual
 	// location so that any competing GetObject/PutObject/DeleteObject do not race.
