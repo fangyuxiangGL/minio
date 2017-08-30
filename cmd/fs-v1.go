@@ -220,13 +220,13 @@ func (fs fsObjects) MakeBucketWithLocation(bucket, location string) error {
 		return toObjectErr(err, bucket)
 	}
 
-	if err = create4LevelDirs(bucketDir, fsMkdir); err != nil {
+	if err = createLevelDirs(bucketDir, 4, fsMkdir); err != nil {
 		return toObjectErr(err, bucket)
 	}
  
   bucketMetaDir := pathJoin(fs.fsPath, minioMetaBucket, bucketMetaPrefix, bucket) 
   
-	if err = create4LevelDirs(bucketMetaDir, fsMkdir); err != nil {
+	if err = createLevelDirs(bucketMetaDir, 4, fsMkdir); err != nil {
 		return toObjectErr(err, bucket)
 	}
 
@@ -416,8 +416,11 @@ func (fs fsObjects) GetObject(bucket, object string, offset int64, length int64,
 		defer fs.rwPool.Close(fsMetaPath)
 	}
 
+  hashDir := hashDirToLevel(object, 4)
+  object = strings.Replace(object, "/", "%2F", -1)
+
 	// Read the object, doesn't exist returns an s3 compatible error.
-	fsObjPath := pathJoin(fs.fsPath, bucket, object)
+	fsObjPath := pathJoin(fs.fsPath, bucket, hashDir, object)
 	reader, size, err := fsOpenFile(fsObjPath, offset)
 	if err != nil {
 		return toObjectErr(err, bucket, object)
@@ -473,8 +476,11 @@ func (fs fsObjects) getObjectInfo(bucket, object string) (oi ObjectInfo, e error
 		return oi, toObjectErr(traceError(err), bucket, object)
 	}
 
+  hashDir := hashDirToLevel(object, 4)
+  object = strings.Replace(object, "/", "%2F", -1)
+
 	// Stat the file to get file size.
-	fi, err := fsStatFile(pathJoin(fs.fsPath, bucket, object))
+	fi, err := fsStatFile(pathJoin(fs.fsPath, bucket, hashDir, object))
 	if err != nil {
 		return oi, toObjectErr(err, bucket, object)
 	}
@@ -533,7 +539,7 @@ func (fs fsObjects) PutObject(bucket string, object string, size int64, data io.
 	  return ObjectInfo{}, toObjectErr(traceError(errFileAccessDenied), bucket, object)
 	}
 
-  hashDir := hashDirTo4Level(object)
+  hashDir := hashDirToLevel(object, 4)
   object = strings.Replace(object, "/", "%2F", -1)
 
 	if err = checkPutObjectArgs(bucket, object, fs); err != nil {

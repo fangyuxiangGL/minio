@@ -157,35 +157,22 @@ func retainSlash(s string) string {
 
 type createDirFunc func(string) error
 
-func create4LevelDirs(dir string, createDir createDirFunc) error {
-    var dirL1,dirL2,dirL3,dirL4 [1]byte
-    var i,j,k,l byte
+func createLevelDirs(dir string, level int, createDir createDirFunc) error {
+    var dirLevel [1]byte
+    var i byte
     if err := createDir(dir); err != nil {
         return err 
     }
-    for i = 0; i < 6; i++ {
-        dirL1[0] = 'A' + i 
-        if err := createDir(pathJoin(dir, string(dirL1[:]))); err != nil {
+  
+    if (level <= 0) {
+       return nil
+    }
+
+    for i = 0; i < 16; i++ {
+        dirLevel[0] = 'A' + i 
+        if err := createLevelDirs(pathJoin(dir, string(dirLevel[:])), level - 1, createDir); err != nil {
             return err 
         }
-        for j = 0; j < 6; j++ {
-            dirL2[0] = 'A' + j
-            if err := createDir(pathJoin(dir, string(dirL1[:]), string(dirL2[:]))); err != nil {
-                return err 
-            }
-            for k = 0; k < 6; k++ {
-                dirL3[0] = 'A' + k
-                if err := createDir(pathJoin(dir, string(dirL1[:]), string(dirL2[:]), string(dirL3[:]))); err != nil {
-                    return err 
-                }
-                for l = 0; l < 6; l++ {
-                    dirL4[0] = 'A' + l
-                    if err := createDir(pathJoin(dir, string(dirL1[:]), string(dirL2[:]), string(dirL3[:]), string(dirL4[:]))); err != nil {
-                        return err 
-                    }
-                }   
-            }   
-        }   
     }   
 
     return nil
@@ -199,18 +186,18 @@ func hash32(s string) ([]byte, error){
     return buf.Bytes(), err 
 }
 
-func hashDirTo4Level(dir string) string {
+func hashDirToLevel(dir string, levels int) string {
     h, err := hash32(dir);
     if (err != nil) {
         return ""
     }
 
-    var buffer [7]byte  
-    for i := 0; i < 7; i++ {
+    var buffer = make([]byte, 2 * levels - 1)  
+    for i := 0; i < 2 * levels - 1; i++ {
         if (i % 2 != 0) {
             buffer[i] = '/' 
         } else {
-            buffer[i] = h[i / 2] % 6 + 'A' 
+            buffer[i] = h[i / 2] % 16 + 'A' 
         }   
     }   
     return string(buffer[:])
