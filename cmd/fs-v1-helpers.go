@@ -466,6 +466,18 @@ func fsDeleteFile(basePath, deletePath string) error {
 	return deleteFile(basePath, deletePath)
 }
 
+func fsDeleteFile2(basePath, deletePath string) error {
+	if err := checkPathLength(basePath); err != nil {
+		return traceError(err)
+	}
+
+	if err := checkPathLength(deletePath); err != nil {
+		return traceError(err)
+	}
+
+	return deleteFile2(basePath, deletePath)
+}
+
 // fsRemoveMeta safely removes a locked file and takes care of Windows special case
 func fsRemoveMeta(basePath, deletePath, tmpDir string) error {
 	// Special case for windows please read through.

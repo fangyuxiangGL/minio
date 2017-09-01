@@ -700,13 +700,13 @@ func (fs fsObjects) DeleteObject(bucket, object string) error {
 	}
 
 	// Delete the object.
-	if err := fsDeleteFile(pathJoin(fs.fsPath, bucket), pathJoin(fs.fsPath, bucket, hashDir, tmp)); err != nil {
+	if err := fsDeleteFile2(pathJoin(fs.fsPath, bucket), pathJoin(fs.fsPath, bucket, hashDir, tmp)); err != nil {
 		return toObjectErr(err, bucket, object)
 	}
 
 	if bucket != minioMetaBucket {
 		// Delete the metadata object.
-		err := fsDeleteFile(minioMetaBucketDir, fsMetaPath)
+		err := fsDeleteFile2(minioMetaBucketDir, fsMetaPath)
 		if err != nil && errorCause(err) != errFileNotFound {
 			return toObjectErr(err, bucket, object)
 		}

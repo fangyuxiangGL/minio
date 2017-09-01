@@ -877,6 +877,31 @@ func deleteFile(basePath, deletePath string) error {
 	return nil
 }
 
+func deleteFile2(basePath, deletePath string) error {
+	if basePath == deletePath {
+		return nil
+	}
+
+	// Attempt to remove path.
+	if err := os.Remove((deletePath)); err != nil {
+		// Ignore errors if the directory is not empty. The server relies on
+		// this functionality, and sometimes uses recursion that should not
+		// error on parent directories.
+		if isSysErrNotEmpty(err) {
+			return nil
+		}
+
+		if os.IsNotExist(err) {
+			return errFileNotFound
+		} else if os.IsPermission(err) {
+			return errFileAccessDenied
+		}
+		return err
+	}
+
+	return nil
+}
+
 // DeleteFile - delete a file at path.
 func (s *posix) DeleteFile(volume, path string) (err error) {
 	defer func() {
