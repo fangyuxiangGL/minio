@@ -683,8 +683,11 @@ func (fs fsObjects) DeleteObject(bucket, object string) error {
 		return toObjectErr(err, bucket)
 	}
 
+  hashDir := hashDirToLevel(object, 4)
+  tmp := strings.Replace(object, "/", "%2F", -1)
+
 	minioMetaBucketDir := pathJoin(fs.fsPath, minioMetaBucket)
-	fsMetaPath := pathJoin(minioMetaBucketDir, bucketMetaPrefix, bucket, object, fsMetaJSONFile)
+	fsMetaPath := pathJoin(minioMetaBucketDir, bucketMetaPrefix, bucket, hashDir, tmp, fsMetaJSONFile)
 	if bucket != minioMetaBucket {
 		rwlk, lerr := fs.rwPool.Write(fsMetaPath)
 		if lerr == nil {
@@ -697,7 +700,7 @@ func (fs fsObjects) DeleteObject(bucket, object string) error {
 	}
 
 	// Delete the object.
-	if err := fsDeleteFile(pathJoin(fs.fsPath, bucket), pathJoin(fs.fsPath, bucket, object)); err != nil {
+	if err := fsDeleteFile(pathJoin(fs.fsPath, bucket), pathJoin(fs.fsPath, bucket, hashDir, tmp)); err != nil {
 		return toObjectErr(err, bucket, object)
 	}
 
@@ -836,9 +839,10 @@ func (fs fsObjects) ListObjects(bucket, prefix, marker, delimiter string, maxKey
 			return ObjectInfo{}, toObjectErr(err, bucket, entry)
 		}
 
+    tmp := strings.Replace(entry, "%2F", "/", -1)
 		// Success.
 		return ObjectInfo{
-			Name:    entry,
+			Name:    tmp,
 			Bucket:  bucket,
 			Size:    fi.Size(),
 			ModTime: fi.ModTime(),
