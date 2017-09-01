@@ -251,7 +251,7 @@ func fsCreateFile2(filePath string, reader io.Reader, buf []byte, fallocSize int
 //		return 0, traceError(err)
 //	}
 
-	writer, err := os.OpenFile((filePath), os.O_CREATE|os.O_WRONLY, 0666)
+	writer, err := os.OpenFile((filePath), os.O_CREATE|os.O_WRONLY|os.O_SYNC, 0666)
 	if err != nil {
 		// File path cannot be verified since one of the parents is a file.
 		if isSysErrNotDir(err) {
@@ -302,7 +302,7 @@ func fsCreateFile(filePath string, reader io.Reader, buf []byte, fallocSize int6
 		return 0, traceError(err)
 	}
 
-	writer, err := os.OpenFile((filePath), os.O_CREATE|os.O_WRONLY, 0666)
+	writer, err := os.OpenFile((filePath), os.O_CREATE|os.O_WRONLY|os.O_SYNC, 0666)
 	if err != nil {
 		// File path cannot be verified since one of the parents is a file.
 		if isSysErrNotDir(err) {
