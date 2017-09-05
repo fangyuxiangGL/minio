@@ -223,10 +223,14 @@ func (fs fsObjects) MakeBucketWithLocation(bucket, location string) error {
 	if err = createLevelDirs(bucketDir, 4, fsMkdir); err != nil {
 		return toObjectErr(err, bucket)
 	}
- 
-  bucketMetaDir := pathJoin(fs.fsPath, minioMetaBucket, bucketMetaPrefix, bucket) 
+
+  bucketMetaDirBase := pathJoin(fs.fsPath, minioMetaBucket, bucketMetaPrefix) 
+
+  if err = os.MkdirAll(bucketMetaDirBase, 0777); err != nil {
+    return toObjectErr(err, bucket)
+  }
   
-	if err = createLevelDirs(bucketMetaDir, 4, fsMkdir); err != nil {
+	if err = createLevelDirs(pathJoin(bucketMetaDirBase, bucket), 4, fsMkdir); err != nil {
 		return toObjectErr(err, bucket)
 	}
 
@@ -540,7 +544,7 @@ func (fs fsObjects) PutObject(bucket string, object string, size int64, data io.
 	}
 
   hashDir := hashDirToLevel(object, 4)
-  object = strings.Replace(object, "/", "%2F", -1)
+  object = strings.Replace(object, "/", "%2F", -1) 
 
 	if err = checkPutObjectArgs(bucket, object, fs); err != nil {
 		return ObjectInfo{}, err
@@ -683,9 +687,24 @@ func (fs fsObjects) DeleteObject(bucket, object string) error {
 		return toObjectErr(err, bucket)
 	}
 
-  hashDir := hashDirToLevel(object, 4)
-  tmp := strings.Replace(object, "/", "%2F", -1)
+  length := len(object)
+  var hashDir, tmp string
 
+  if length > 8 {
+      maybe_dir := object[0:7]
+      maybe_name := object[8:length]
+      hashDir = hashDirToLevel(maybe_name, 4)
+      if maybe_dir == hashDir {
+          tmp = strings.Replace(maybe_name, "/", "%2F", -1) 
+      } else {
+          hashDir = hashDirToLevel(object, 4)
+          tmp = strings.Replace(object, "/", "%2F", -1)
+      }
+  } else {
+      hashDir = hashDirToLevel(object, 4)
+      tmp = strings.Replace(object, "/", "%2F", -1)
+  }
+  
 	minioMetaBucketDir := pathJoin(fs.fsPath, minioMetaBucket)
 	fsMetaPath := pathJoin(minioMetaBucketDir, bucketMetaPrefix, bucket, hashDir, tmp, fsMetaJSONFile)
 	if bucket != minioMetaBucket {

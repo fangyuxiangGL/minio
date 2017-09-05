@@ -17,6 +17,7 @@
 package cmd
 
 import (
+  "syscall"
 	"fmt"
 	"io"
 	"os"
@@ -251,7 +252,7 @@ func fsCreateFile2(filePath string, reader io.Reader, buf []byte, fallocSize int
 //		return 0, traceError(err)
 //	}
 
-	writer, err := os.OpenFile((filePath), os.O_CREATE|os.O_WRONLY|os.O_SYNC, 0666)
+	writer, err := os.OpenFile((filePath), os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		// File path cannot be verified since one of the parents is a file.
 		if isSysErrNotDir(err) {
@@ -280,6 +281,7 @@ func fsCreateFile2(filePath string, reader io.Reader, buf []byte, fallocSize int
 			return 0, traceError(err)
 		}
 	}
+  syscall.Fsync(int(writer.Fd()));
 	return bytesWritten, nil
 }
 
@@ -302,7 +304,7 @@ func fsCreateFile(filePath string, reader io.Reader, buf []byte, fallocSize int6
 		return 0, traceError(err)
 	}
 
-	writer, err := os.OpenFile((filePath), os.O_CREATE|os.O_WRONLY|os.O_SYNC, 0666)
+	writer, err := os.OpenFile((filePath), os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		// File path cannot be verified since one of the parents is a file.
 		if isSysErrNotDir(err) {
@@ -331,6 +333,7 @@ func fsCreateFile(filePath string, reader io.Reader, buf []byte, fallocSize int6
 			return 0, traceError(err)
 		}
 	}
+  syscall.Fsync(int(writer.Fd()));
 	return bytesWritten, nil
 }
 
@@ -444,7 +447,7 @@ func fsRenameFile2(sourcePath, destPath string) error {
 //	if err := os.MkdirAll(pathutil.Dir(destPath), 0777); err != nil {
 //		return traceError(err)
 //	}
-	if err := os.Rename((sourcePath), (destPath)); err != nil {
+	if err := syscall.Rename((sourcePath), (destPath)); err != nil {
 		if isSysErrCrossDevice(err) {
 			return traceError(fmt.Errorf("%s (%s)->(%s)", errCrossDeviceLink, sourcePath, destPath))
 		}
