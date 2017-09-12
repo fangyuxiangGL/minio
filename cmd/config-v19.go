@@ -51,6 +51,9 @@ type serverConfigV19 struct {
 
 	// Notification queue configuration.
 	Notify *notifier `json:"notify"`
+
+  MultipartExpiry int64 `json:"multipartExpiry"`
+  MultipartCleanupInterval int64 `json:"multipartCleanupInterval"`
 }
 
 // GetVersion get current config version.
