@@ -162,15 +162,11 @@ func newFSObjectLayer(fsPath string) (ObjectLayer, error) {
 	// Start background process to cleanup old files in `.minio.sys`.
   var multipartExpiry, multipartCleanupInterval time.Duration 
   
-  if serverConfig.MultipartExpiry != 0 {
-    multipartExpiry = time.Duration(serverConfig.MultipartExpiry * int64(time.Hour))
+  if serverConfig.Multipart != nil {
+    multipartExpiry = time.Duration(serverConfig.Multipart.MultipartExpiry * int64(time.Hour))
+    multipartCleanupInterval = time.Duration(serverConfig.Multipart.MultipartCleanupInterval * int64(time.Hour))
   } else {
     multipartExpiry = fsMultipartExpiry
-  }
-
-  if serverConfig.MultipartCleanupInterval != 0 {
-    multipartCleanupInterval = time.Duration(serverConfig.MultipartCleanupInterval * int64(time.Hour))
-  } else {
     multipartCleanupInterval = fsMultipartCleanupInterval
   }
 
