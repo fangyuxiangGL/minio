@@ -1001,6 +1001,7 @@ func (fs fsObjects) cleanupStaleMultipartUploads(cleanupInterval, expiry time.Du
 			for _, bucketInfo := range bucketInfos {
 				fs.cleanupStaleMultipartUpload(bucketInfo.Name, expiry)
 			}
+      timer.Reset(cleanupInterval)
 		}
 	}
 }
