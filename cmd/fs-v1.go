@@ -160,17 +160,29 @@ func newFSObjectLayer(fsPath string) (ObjectLayer, error) {
 	}
 
 	// Start background process to cleanup old files in `.minio.sys`.
-  var multipartExpiry, multipartCleanupInterval time.Duration 
-  
+  var multipartExpiry, multipartCleanupInterval time.Duration  
+
+  unit := time.Hour
+
   if serverConfig.Multipart != nil {
-    multipartExpiry = time.Duration(serverConfig.Multipart.MultipartExpiry * int64(time.Hour))
-    multipartCleanupInterval = time.Duration(serverConfig.Multipart.MultipartCleanupInterval * int64(time.Hour))
+    if serverConfig.Multipart.Unit == "hour" {
+      unit = time.Hour
+    } else if  serverConfig.Multipart.Unit == "minute" {
+      unit = time.Minute
+    }    
+  }
+
+  if serverConfig.Multipart != nil {
+    fmt.Printf("MutipartExpiry:%d MultipartCleanupInterval:%d unit:%d\n", serverConfig.Multipart.Expiry, serverConfig.Multipart.CleanupInterval, unit)
+  }
+
+  if serverConfig.Multipart != nil {
+    multipartExpiry = time.Duration(serverConfig.Multipart.Expiry * int64(unit))
+    multipartCleanupInterval = time.Duration(serverConfig.Multipart.CleanupInterval * int64(unit))
   } else {
     multipartExpiry = fsMultipartExpiry
     multipartCleanupInterval = fsMultipartCleanupInterval
   }
-
-  fmt.Printf("MutipartExpiry:%d MultipartCleanupInterval:%d\n", multipartExpiry, multipartCleanupInterval)
 
 	go fs.cleanupStaleMultipartUploads(multipartCleanupInterval, multipartExpiry, globalServiceDoneCh)
 

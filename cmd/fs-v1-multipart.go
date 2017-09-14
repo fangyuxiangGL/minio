@@ -39,8 +39,9 @@ const (
 )
 
 type fsMultipart struct {
-  MultipartExpiry int64 `json:"multipartExpiry"`
-  MultipartCleanupInterval int64 `json:"multipartCleanupInterval"`
+  Expiry int64 `json:"expiry"`
+  CleanupInterval int64 `json:"cleanupInterval"`
+  Unit string `json:"unit"`
 }
 
 // Returns if the prefix is a multipart upload.
