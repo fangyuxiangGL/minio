@@ -52,7 +52,7 @@ func (fs fsObjects) isMultipartUpload(bucket, prefix string) bool {
 		if err == errFileNotFound {
 			return false
 		}
-		errorIf(err, "Unable to access uploads.json "+uploadsIDPath)
+		//errorIf(err, "Unable to access uploads.json "+uploadsIDPath)
 		return false
 	}
 	return true
