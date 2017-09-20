@@ -23,6 +23,7 @@ import (
 	"reflect"
 	"sync"
 	"time"
+  "syscall"
 )
 
 // Error sent by appendParts go-routine when there are holes in parts.
@@ -224,7 +225,7 @@ func (fs fsObjects) appendPart(bucket, object, uploadID string, part objectPartI
 	tmpObjPath := pathJoin(fs.fsPath, minioMetaTmpBucket, fs.fsUUID, uploadID)
 	// No need to hold a lock, this is a unique file and will be only written
 	// to one one process per uploadID per minio process.
-	wfile, err := os.OpenFile((tmpObjPath), os.O_CREATE|os.O_APPEND|os.O_WRONLY|os.O_SYNC, 0666)
+	wfile, err := os.OpenFile((tmpObjPath), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
 		return err
 	}
@@ -236,5 +237,6 @@ func (fs fsObjects) appendPart(bucket, object, uploadID string, part objectPartI
 	}
 
 	_, err = io.CopyBuffer(wfile, file, buf)
+  syscall.Fsync(int(wfile.Fd()));
 	return err
 }
