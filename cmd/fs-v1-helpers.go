@@ -17,7 +17,7 @@
 package cmd
 
 import (
-  "syscall"
+	"syscall"
 	"fmt"
 	"io"
 	"os"
@@ -363,6 +363,7 @@ func fsRemoveUploadIDPath(basePath, uploadIDPath string) error {
 		}
 	}
 
+	fsRemoveDir(uploadIDPath)
 	return nil
 }
 
