@@ -792,6 +792,10 @@ func (fs fsObjects) CompleteMultipartUpload(bucket string, object string, upload
 				return oi, toObjectErr(traceError(err), bucket, object)
 			}
 
+		        if fsUseSync() {
+				wfile.Sync()
+		        }
+
 			wfile.Close()
 			reader.Close()
 		}

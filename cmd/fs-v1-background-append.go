@@ -236,5 +236,8 @@ func (fs fsObjects) appendPart(bucket, object, uploadID string, part objectPartI
 	}
 
 	_, err = io.CopyBuffer(wfile, file, buf)
+	if fsUseSync() {
+		wfile.Sync()
+	}
 	return err
 }

@@ -780,6 +780,7 @@ func (s *posix) AppendFile(volume, path string, buf []byte) (err error) {
 		return err
 	}
 	_, err = w.Write(buf)
+	w.Sync()
 	w.Close()
 	return err
 }
