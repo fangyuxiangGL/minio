@@ -281,7 +281,7 @@ func fsCreateFile2(filePath string, reader io.Reader, buf []byte, fallocSize int
 			return 0, traceError(err)
 		}
 	}
-  syscall.Fsync(int(writer.Fd()));
+	syscall.Fsync(int(writer.Fd()))
 	return bytesWritten, nil
 }
 
@@ -333,7 +333,7 @@ func fsCreateFile(filePath string, reader io.Reader, buf []byte, fallocSize int6
 			return 0, traceError(err)
 		}
 	}
-  syscall.Fsync(int(writer.Fd()));
+	syscall.Fsync(int(writer.Fd()))
 	return bytesWritten, nil
 }
 
