@@ -700,10 +700,10 @@ func (fs fsObjects) CompleteMultipartUpload(bucket string, object string, upload
 	objectMPartPathLock := globalNSMutex.NewNSLock(minioMetaMultipartBucket, pathJoin(bucket, object))
 	objectMPartPathLock.Lock()
 	defer func() {
-		objectMPartPathLock.Unlock()
 		if removeObjectDir == true {
 			fs.deleteObjectUploadsDir(bucket, object)
 		}
+		objectMPartPathLock.Unlock()
 	}() 
 
 	fsMetaPathMultipart := pathJoin(fs.fsPath, minioMetaMultipartBucket, uploadIDPath, fsMetaJSONFile)
@@ -919,10 +919,10 @@ func (fs fsObjects) AbortMultipartUpload(bucket, object, uploadID string) error 
 		pathJoin(bucket, object))
 	objectMPartPathLock.Lock()
 	defer func() {
-	    	objectMPartPathLock.Unlock()
 		if removeObjectDir == true {
 			fs.deleteObjectUploadsDir(bucket, object)
 		}
+	    	objectMPartPathLock.Unlock()
 	}() 
 
 	fsMetaPath := pathJoin(fs.fsPath, minioMetaMultipartBucket, uploadIDPath, fsMetaJSONFile)
