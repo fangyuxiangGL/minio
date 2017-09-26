@@ -23,7 +23,6 @@ import (
 	"reflect"
 	"sync"
 	"time"
-  "syscall"
 )
 
 // Error sent by appendParts go-routine when there are holes in parts.
@@ -237,6 +236,6 @@ func (fs fsObjects) appendPart(bucket, object, uploadID string, part objectPartI
 	}
 
 	_, err = io.CopyBuffer(wfile, file, buf)
-  syscall.Fsync(int(wfile.Fd()));
+        wfile.Sync()
 	return err
 }

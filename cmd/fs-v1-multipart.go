@@ -23,7 +23,6 @@ import (
 	"hash"
 	"io"
 	"os"
-	"syscall"
 	pathutil "path"
 	"strings"
 	"time"
@@ -837,7 +836,7 @@ func (fs fsObjects) CompleteMultipartUpload(bucket string, object string, upload
 				return oi, toObjectErr(traceError(err), bucket, object)
 			}
 
-			syscall.Fsync(int(wfile.Fd()))
+			wfile.Sync()
 			wfile.Close()
 			reader.Close()
 		}
