@@ -77,11 +77,11 @@ func (fs fsObjects) deleteObjectUploadsDir(bucket, object string) error {
 
 // Removes the uploadID, called either by CompleteMultipart of AbortMultipart. If the resuling uploads
 // slice is empty then we remove/purge the file.
-func (fs fsObjects) removeUploadID(bucket, object, uploadID string, rwlk *lock.LockedFile) (error, bool) {
+func (fs fsObjects) removeUploadID(bucket, object, uploadID string, rwlk *lock.LockedFile) (bool, error) {
 	uploadIDs := uploadsV1{}
 	_, err := uploadIDs.ReadFrom(rwlk)
 	if err != nil {
-		return err, false
+		return false, err
 	}
 
 	// Removes upload id from the uploads list.
@@ -90,12 +90,12 @@ func (fs fsObjects) removeUploadID(bucket, object, uploadID string, rwlk *lock.L
 	// Check this is the last entry.
 	if uploadIDs.IsEmpty() {
 		// No more uploads left, so we delete `uploads.json` file.
-		return fs.deleteUploadsJSON(bucket, object, uploadID), true
+		return true, fs.deleteUploadsJSON(bucket, object, uploadID)
 	} // else not empty
 
 	// Write update `uploads.json`.
 	_, err = uploadIDs.WriteTo(rwlk)
-	return err, false
+	return false, err
 }
 
 // Adds a new uploadID if no previous `uploads.json` is
@@ -701,10 +701,10 @@ func (fs fsObjects) CompleteMultipartUpload(bucket string, object string, upload
 	objectMPartPathLock := globalNSMutex.NewNSLock(minioMetaMultipartBucket, pathJoin(bucket, object))
 	objectMPartPathLock.Lock()
 	defer func() {
-		objectMPartPathLock.Unlock()
 		if removeObjectDir == true {
 			fs.deleteObjectUploadsDir(bucket, object)
 		}
+		objectMPartPathLock.Unlock()
 	}() 
 
 	fsMetaPathMultipart := pathJoin(fs.fsPath, minioMetaMultipartBucket, uploadIDPath, fsMetaJSONFile)
@@ -876,7 +876,7 @@ func (fs fsObjects) CompleteMultipartUpload(bucket string, object string, upload
 	}
 
 	// Remove entry from `uploads.json`.
-	err, removeObjectDir = fs.removeUploadID(bucket, object, uploadID, rwlk)
+	removeObjectDir, err = fs.removeUploadID(bucket, object, uploadID, rwlk)
 	if err != nil {
 		return oi, toObjectErr(err, minioMetaMultipartBucket, pathutil.Join(bucket, object))
 	}
@@ -920,10 +920,10 @@ func (fs fsObjects) AbortMultipartUpload(bucket, object, uploadID string) error 
 		pathJoin(bucket, object))
 	objectMPartPathLock.Lock()
 	defer func() {
-	    	objectMPartPathLock.Unlock()
 		if removeObjectDir == true {
 			fs.deleteObjectUploadsDir(bucket, object)
 		}
+	    	objectMPartPathLock.Unlock()
 	}() 
 
 	fsMetaPath := pathJoin(fs.fsPath, minioMetaMultipartBucket, uploadIDPath, fsMetaJSONFile)
@@ -961,7 +961,7 @@ func (fs fsObjects) AbortMultipartUpload(bucket, object, uploadID string) error 
 	}
 
 	// Remove entry from `uploads.json`.
-	err, removeObjectDir = fs.removeUploadID(bucket, object, uploadID, rwlk)
+	removeObjectDir, err = fs.removeUploadID(bucket, object, uploadID, rwlk)
 	if err != nil {
 		return toObjectErr(err, bucket, object)
 	}
