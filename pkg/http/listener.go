@@ -123,8 +123,8 @@ func (listener *httpListener) start() {
 	// Closure to handle single connection.
 	handleConn := func(tcpConn *net.TCPConn, doneCh <-chan struct{}) {
 		// Tune accepted TCP connection.
-		tcpConn.SetKeepAlive(true)
-		tcpConn.SetKeepAlivePeriod(listener.tcpKeepAliveTimeout)
+		//tcpConn.SetKeepAlive(true)
+		//tcpConn.SetKeepAlivePeriod(listener.tcpKeepAliveTimeout)
 
 		bufconn := newBufConn(tcpConn, listener.readTimeout, listener.writeTimeout,
 			listener.updateBytesReadFunc, listener.updateBytesWrittenFunc)

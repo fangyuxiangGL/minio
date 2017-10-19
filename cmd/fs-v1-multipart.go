@@ -801,6 +801,15 @@ func (fs fsObjects) CompleteMultipartUpload(bucket string, object string, upload
 
 		// Allocate staging buffer.
 		var buf = make([]byte, readSizeV1)
+		
+		// No need to hold a lock, this is a unique file and will be only written
+		// to one one process per uploadID per minio process.
+		var wfile *os.File
+		wfile, err = os.OpenFile((fsTmpObjPath), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
+		if err != nil {
+			fs.rwPool.Close(fsMetaPathMultipart)
+			return oi, toObjectErr(traceError(err), bucket, object)
+		}
 
 		for _, part := range parts {
 			// Construct part suffix.
@@ -817,17 +826,6 @@ func (fs fsObjects) CompleteMultipartUpload(bucket string, object string, upload
 				}
 				return oi, toObjectErr(traceError(err), minioMetaMultipartBucket, partSuffix)
 			}
-
-			// No need to hold a lock, this is a unique file and will be only written
-			// to one one process per uploadID per minio process.
-			var wfile *os.File
-			wfile, err = os.OpenFile((fsTmpObjPath), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
-			if err != nil {
-				reader.Close()
-				fs.rwPool.Close(fsMetaPathMultipart)
-				return oi, toObjectErr(traceError(err), bucket, object)
-			}
-
 			_, err = io.CopyBuffer(wfile, reader, buf)
 			if err != nil {
 				wfile.Close()
@@ -835,10 +833,11 @@ func (fs fsObjects) CompleteMultipartUpload(bucket string, object string, upload
 				fs.rwPool.Close(fsMetaPathMultipart)
 				return oi, toObjectErr(traceError(err), bucket, object)
 			}
-			wfile.Sync()
-			wfile.Close()
 			reader.Close()
 		}
+
+		wfile.Sync()
+		wfile.Close()
 
 		if err = fsRenameFile(fsTmpObjPath, fsNSObjPath); err != nil {
 			fs.rwPool.Close(fsMetaPathMultipart)

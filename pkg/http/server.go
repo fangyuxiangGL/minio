@@ -34,13 +34,13 @@ const (
 	DefaultShutdownTimeout = 5 * time.Second
 
 	// DefaultTCPKeepAliveTimeout - default TCP keep alive timeout for accepted connection.
-	DefaultTCPKeepAliveTimeout = 10 * time.Second
+	DefaultTCPKeepAliveTimeout = 120 * time.Second
 
 	// DefaultReadTimeout - default timout to read data from accepted connection.
-	DefaultReadTimeout = 30 * time.Second
+	DefaultReadTimeout = 0 * time.Second
 
 	// DefaultWriteTimeout - default timout to write data to accepted connection.
-	DefaultWriteTimeout = 30 * time.Second
+	DefaultWriteTimeout = 0 * time.Second
 
 	// DefaultMaxHeaderBytes - default maximum HTTP header size in bytes.
 	DefaultMaxHeaderBytes = 1 * humanize.MiByte

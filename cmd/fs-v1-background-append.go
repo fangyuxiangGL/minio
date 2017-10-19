@@ -142,6 +142,14 @@ func (fs fsObjects) appendParts(bucket, object, uploadID string, info bgAppendPa
 	// Holds the list of parts that is already appended to the "append" file.
 	appendMeta := fsMetaV1{}
 
+	tmpObjPath := pathJoin(fs.fsPath, minioMetaTmpBucket, fs.fsUUID, uploadID)
+	// No need to hold a lock, this is a unique file and will be only written
+	// to one one process per uploadID per minio process.
+	wfile, err := os.OpenFile((tmpObjPath), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
+	if err != nil {
+		return
+	}
+	defer wfile.Close()
 	// Allocate staging read buffer.
 	buf := make([]byte, readSizeV1)
 	for {
@@ -150,7 +158,6 @@ func (fs fsObjects) appendParts(bucket, object, uploadID string, info bgAppendPa
 			// We receive on this channel when new part gets uploaded or when complete-multipart sends
 			// a value on this channel to confirm if all the required parts are appended.
 			meta := input.meta
-
 			for {
 				// Append should be done such a way that if part-3 and part-2 is uploaded before part-1, we
 				// wait till part-1 is uploaded after which we append part-2 and part-3 as well in this for-loop.
@@ -168,7 +175,7 @@ func (fs fsObjects) appendParts(bucket, object, uploadID string, info bgAppendPa
 					break
 				}
 
-				if err := fs.appendPart(bucket, object, uploadID, part, buf); err != nil {
+				if err := fs.appendPart(bucket, object, uploadID, part, buf, wfile); err != nil {
 					fsRemoveFile(appendPath)
 					appendMeta.Parts = nil
 					input.errCh <- err
@@ -177,6 +184,8 @@ func (fs fsObjects) appendParts(bucket, object, uploadID string, info bgAppendPa
 
 				appendMeta.AddObjectPart(part.Number, part.Name, part.ETag, part.Size)
 			}
+
+			wfile.Sync()
 		case <-info.abortCh:
 			// abort-multipart-upload closed abortCh to end the appendParts go-routine.
 			fsRemoveFile(appendPath)
@@ -207,7 +216,7 @@ func (fs fsObjects) appendParts(bucket, object, uploadID string, info bgAppendPa
 
 // Appends the "part" to the append-file inside "tmp/" that finally gets moved to the actual location
 // upon complete-multipart-upload.
-func (fs fsObjects) appendPart(bucket, object, uploadID string, part objectPartInfo, buf []byte) error {
+func (fs fsObjects) appendPart(bucket, object, uploadID string, part objectPartInfo, buf []byte, wfile *os.File) error {
 	partPath := pathJoin(fs.fsPath, minioMetaMultipartBucket, bucket, object, uploadID, part.Name)
 
 	var offset int64
@@ -221,21 +230,11 @@ func (fs fsObjects) appendPart(bucket, object, uploadID string, part objectPartI
 	}
 	defer file.Close()
 
-	tmpObjPath := pathJoin(fs.fsPath, minioMetaTmpBucket, fs.fsUUID, uploadID)
-	// No need to hold a lock, this is a unique file and will be only written
-	// to one one process per uploadID per minio process.
-	wfile, err := os.OpenFile((tmpObjPath), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
-	if err != nil {
-		return err
-	}
-	defer wfile.Close()
-
 	// Fallocate more space as we concatenate.
 	if err = fsFAllocate(int(wfile.Fd()), 0, size); err != nil {
 		return err
 	}
 
 	_, err = io.CopyBuffer(wfile, file, buf)
-	wfile.Sync()
 	return err
 }

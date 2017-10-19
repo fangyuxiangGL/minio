@@ -332,7 +332,6 @@ func fsCreateFile(filePath string, reader io.Reader, buf []byte, fallocSize int6
 			return 0, traceError(err)
 		}
 	}
-	writer.Sync()
 	return bytesWritten, nil
 }
 
