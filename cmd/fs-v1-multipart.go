@@ -614,16 +614,18 @@ func (fs fsObjects) PutObjectPart(bucket, object, uploadID string, partID int, s
 		return pi, toObjectErr(err, minioMetaMultipartBucket, partSuffix)
 	}
 
-	// Append the part in background.
-	errCh := fs.append(bucket, object, uploadID, fsMeta)
-	go func() {
-		// Also receive the error so that the appendParts go-routine
-		// does not block on send. But the error received is ignored
-		// as fs.PutObjectPart() would have already returned success
-		// to the client.
-		<-errCh
-		partLock.Unlock()
-	}()
+	if strings.ToLower(os.Getenv("MINIO_NON_BACKAPPEND")) == "false" {
+		// Append the part in background.
+		errCh := fs.append(bucket, object, uploadID, fsMeta)
+		go func() {
+			// Also receive the error so that the appendParts go-routine
+			// does not block on send. But the error received is ignored
+			// as fs.PutObjectPart() would have already returned success
+			// to the client.
+			<-errCh
+			partLock.Unlock()
+		}()
+	}
 
 	return PartInfo{
 		PartNumber:   partID,
