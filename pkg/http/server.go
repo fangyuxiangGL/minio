@@ -37,10 +37,10 @@ const (
 	DefaultTCPKeepAliveTimeout = 120 * time.Second
 
 	// DefaultReadTimeout - default timout to read data from accepted connection.
-	DefaultReadTimeout = 0 * time.Second
+	DefaultReadTimeout = 60 * time.Second
 
 	// DefaultWriteTimeout - default timout to write data to accepted connection.
-	DefaultWriteTimeout = 0 * time.Second
+	DefaultWriteTimeout = 60 * time.Second
 
 	// DefaultMaxHeaderBytes - default maximum HTTP header size in bytes.
 	DefaultMaxHeaderBytes = 1 * humanize.MiByte
